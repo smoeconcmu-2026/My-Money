@@ -6,134 +6,52 @@
     <title>My Pocket - จัดการเงินส่วนตัว</title>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Prompt', sans-serif;
-            background-color: #f0f2f5;
-            color: #333;
-            margin: 0;
-            padding: 20px;
-        }
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-        }
-        .header {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .balance-card {
-            background: linear-gradient(135deg, #4CAF50, #2E7D32);
-            color: white;
-            padding: 30px;
-            border-radius: 15px;
-            text-align: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            margin-bottom: 30px;
-        }
+        body { font-family: 'Prompt', sans-serif; background-color: #f0f2f5; color: #333; margin: 0; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 20px; }
+        .balance-card { background: linear-gradient(135deg, #4CAF50, #2E7D32); color: white; padding: 30px; border-radius: 15px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 30px; }
         .balance-card h2 { margin: 0 0 10px 0; font-size: 1.2rem; opacity: 0.9; }
         .balance-card h1 { margin: 0; font-size: 3rem; }
-        
-        .grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-        @media (max-width: 768px) {
-            .grid { grid-template-columns: 1fr; }
-        }
-        .card {
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
         h3 { margin-top: 0; border-bottom: 2px solid #f0f2f5; padding-bottom: 10px; }
-        
-        /* ฟอร์มและปุ่ม */
         label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.9rem; }
-        input, select {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 15px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            box-sizing: border-box;
-            font-family: 'Prompt', sans-serif;
-        }
-        button {
-            width: 100%;
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            font-family: 'Prompt', sans-serif;
-            transition: 0.2s;
-        }
+        input { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-family: 'Prompt', sans-serif; }
+        button { width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; font-family: 'Prompt', sans-serif; transition: 0.2s; }
         .btn-income { background-color: #4CAF50; color: white; }
         .btn-expense { background-color: #f44336; color: white; margin-top: 10px;}
         button:hover { opacity: 0.9; }
-
-        /* กระเป๋าเงิน (Pockets) */
-        .pocket-item {
-            border: 1px solid #e0e0e0;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            background: #fafafa;
-        }
-        .pocket-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
+        .pocket-item { border: 1px solid #e0e0e0; padding: 15px; border-radius: 10px; margin-bottom: 15px; background: #fafafa; }
+        .pocket-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .pocket-name { font-weight: bold; font-size: 1.1rem; }
         .pocket-amount { color: #2196F3; font-weight: bold; font-size: 1.2rem; }
-        .add-to-pocket {
-            display: flex;
-            gap: 10px;
-        }
+        .add-to-pocket { display: flex; gap: 10px; }
         .add-to-pocket input { margin-bottom: 0; }
         .add-to-pocket button { background-color: #2196F3; color: white; width: auto; white-space: nowrap; }
-
-        /* ประวัติ */
-        .history-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            max-height: 300px;
-            overflow-y: auto;
-        }
-        .history-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid #eee;
-        }
+        .history-list { list-style: none; padding: 0; margin: 0; max-height: 300px; overflow-y: auto; }
+        .history-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
         .text-green { color: #4CAF50; font-weight: bold; }
         .text-red { color: #f44336; font-weight: bold; }
+        .sync-status { text-align: center; font-size: 0.85rem; color: #666; margin-top: 10px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="header">
-        <h1>💰 จัดการเงินส่วนตัว</h1>
+        <h1>💰 จัดการเงินส่วนตัว (My Pocket)</h1>
     </div>
 
-    <!-- ยอดเงินคงเหลือปัจจุบัน -->
     <div class="balance-card">
         <h2>ยอดเงินที่ใช้ได้ปัจจุบัน (บาท)</h2>
         <h1 id="total-balance">0.00</h1>
     </div>
 
     <div class="grid">
-        <!-- ฝั่งซ้าย: บันทึกรายรับ-รายจ่าย -->
         <div class="card">
             <h3>📝 บันทึกรายการ</h3>
-            <label>ชื่อรายการ (เช่น เงินเดือน, ค่าอาหาร)</label>
+            <label>ชื่อรายการ</label>
             <input type="text" id="desc" placeholder="ระบุชื่อรายการ">
             
             <label>จำนวนเงิน (บาท)</label>
@@ -142,20 +60,14 @@
             <button class="btn-income" onclick="addTransaction('income')">+ เพิ่มรายรับ</button>
             <button class="btn-expense" onclick="addTransaction('expense')">- เพิ่มรายจ่าย</button>
 
-            <h3 style="margin-top: 30px;">ประวัติล่าสุด</h3>
-            <ul class="history-list" id="history-list">
-                <!-- ประวัติจะมาแสดงตรงนี้ -->
-            </ul>
+            <h3 style="margin-top: 30px;">ประวัติรายการล่าสุด</h3>
+            <ul class="history-list" id="history-list"></ul>
+            <div class="sync-status" id="sync-status">กำลังโหลดข้อมูลจาก Google Sheets...</div>
         </div>
 
-        <!-- ฝั่งขวา: กระเป๋าเงินสำหรับเก็บออม -->
         <div class="card">
             <h3>💼 กระเป๋าเงิน (Pockets)</h3>
-            <p style="font-size: 0.85rem; color: #666; margin-top: -10px;">
-                * การโอนเงินเข้ากระเป๋า จะหักเงินจาก "ยอดเงินที่ใช้ได้ปัจจุบัน"
-            </p>
             
-            <!-- กระเป๋า: ไปเที่ยว -->
             <div class="pocket-item">
                 <div class="pocket-header">
                     <span class="pocket-name">✈️ ไปเที่ยว</span>
@@ -163,11 +75,10 @@
                 </div>
                 <div class="add-to-pocket">
                     <input type="number" id="travel-input" placeholder="จำนวนเงิน">
-                    <button onclick="addToPocket('travel')">เก็บเงิน</button>
+                    <button onclick="addToPocket('travel', 'ไปเที่ยว')">เก็บเงิน</button>
                 </div>
             </div>
 
-            <!-- กระเป๋า: เก็บออม -->
             <div class="pocket-item">
                 <div class="pocket-header">
                     <span class="pocket-name">🐷 เงินออมฉุกเฉิน</span>
@@ -175,11 +86,10 @@
                 </div>
                 <div class="add-to-pocket">
                     <input type="number" id="savings-input" placeholder="จำนวนเงิน">
-                    <button onclick="addToPocket('savings')">เก็บเงิน</button>
+                    <button onclick="addToPocket('savings', 'เงินออมฉุกเฉิน')">เก็บเงิน</button>
                 </div>
             </div>
-            
-            <!-- กระเป๋า: ช้อปปิ้ง -->
+
             <div class="pocket-item">
                 <div class="pocket-header">
                     <span class="pocket-name">🛍️ ช้อปปิ้ง</span>
@@ -187,24 +97,110 @@
                 </div>
                 <div class="add-to-pocket">
                     <input type="number" id="shopping-input" placeholder="จำนวนเงิน">
-                    <button onclick="addToPocket('shopping')">เก็บเงิน</button>
+                    <button onclick="addToPocket('shopping', 'ช้อปปิ้ง')">เก็บเงิน</button>
                 </div>
             </div>
-
         </div>
     </div>
 </div>
 
 <script>
-    // ตัวแปรเก็บข้อมูล
-    let balance = 0;
-    let pockets = {
-        travel: 0,
-        savings: 0,
-        shopping: 0
-    };
+    // 1. ลิงก์ CSV สาธารณะของคุณ
+    const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRKXuVKQS42rJVKfjDBNEuVLfXPEFF3vL2JmtHeqNQt83Xovyx8BxonsQkkLlqUzwhiB4Ds5yIDl-uK/pub?output=csv";
 
-    // ฟังก์ชันอัปเดตหน้าจอ
+    // 2. นำ URL Web App จาก Google Apps Script มาใส่ตรงนี้เพื่อส่งข้อมูลบันทึกกลับไป
+    const GOOGLE_SCRIPT_URL = "วาง_URL_จาก_GOOGLE_APPS_SCRIPT_ที่นี่";
+
+    let balance = 0;
+    let pockets = { travel: 0, savings: 0, shopping: 0 };
+
+    // ฟังก์ชันแปลงข้อความ CSV เป็น Array
+    function parseCSV(text) {
+        let lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+        return lines.map(line => {
+            let values = [];
+            let current = '';
+            let inQuotes = false;
+            for (let i = 0; i < line.length; i++) {
+                let char = line[i];
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    values.push(current.trim());
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            values.push(current.trim());
+            return values;
+        });
+    }
+
+    // โหลดข้อมูลล่าสุดจาก Google Sheets CSV
+    function loadDataFromSheet() {
+        fetch(CSV_URL)
+            .then(response => response.text())
+            .then(csvText => {
+                let rows = parseCSV(csvText);
+                if (rows.length <= 1) {
+                    document.getElementById('sync-status').innerText = 'ไม่พบข้อมูลในชีต';
+                    return;
+                }
+
+                // รีเซ็ตค่าก่อนคำนวณใหม่
+                balance = 0;
+                pockets = { travel: 0, savings: 0, shopping: 0 };
+                document.getElementById('history-list').innerHTML = '';
+
+                // ข้ามแถวหัวข้อ (Index 0)
+                for (let i = 1; i < rows.length; i++) {
+                    let row = rows[i];
+                    if (row.length < 4) continue;
+
+                    let type = row[1];
+                    let desc = row[2];
+                    let amount = parseFloat(row[3]) || 0;
+                    let pocketName = row[4] || '-';
+
+                    if (type === 'รายรับ') {
+                        balance += amount;
+                        addHistoryUI(desc, amount, 'income');
+                    } else if (type === 'รายจ่าย') {
+                        balance -= amount;
+                        addHistoryUI(desc, amount, 'expense');
+                    } else if (type === 'โอนเข้ากระเป๋า') {
+                        balance -= amount;
+                        if (pocketName.includes('ไปเที่ยว')) pockets.travel += amount;
+                        else if (pocketName.includes('เงินออม')) pockets.savings += amount;
+                        else if (pocketName.includes('ช้อปปิ้ง')) pockets.shopping += amount;
+                        addHistoryUI(desc, amount, 'expense');
+                    }
+                }
+
+                updateUI();
+                document.getElementById('sync-status').innerText = 'ซิงค์ข้อมูลกับ Google Sheets เรียบร้อยแล้ว';
+            })
+            .catch(err => {
+                console.error(err);
+                document.getElementById('sync-status').innerText = 'ไม่สามารถดึงข้อมูลจาก Google Sheets ได้';
+            });
+    }
+
+    function sendToGoogleSheet(data) {
+        if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes("วาง_URL")) return;
+        
+        fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        }).then(() => {
+            // รอแป๊บเดียวแล้วโหลดข้อมูลใหม่จาก CSV
+            setTimeout(loadDataFromSheet, 1500);
+        }).catch(err => console.error('Error sending data:', err));
+    }
+
     function updateUI() {
         document.getElementById('total-balance').innerText = balance.toLocaleString('th-TH', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         document.getElementById('pocket-travel-amount').innerText = pockets.travel.toLocaleString('th-TH', {minimumFractionDigits: 2}) + ' ฿';
@@ -212,82 +208,50 @@
         document.getElementById('pocket-shopping-amount').innerText = pockets.shopping.toLocaleString('th-TH', {minimumFractionDigits: 2}) + ' ฿';
     }
 
-    // ฟังก์ชันเพิ่มรายรับ/รายจ่าย
     function addTransaction(type) {
-        const descInput = document.getElementById('desc');
-        const amountInput = document.getElementById('amount');
-        const desc = descInput.value.trim();
-        const amount = parseFloat(amountInput.value);
+        const desc = document.getElementById('desc').value.trim();
+        const amount = parseFloat(document.getElementById('amount').value);
 
-        if (desc === '' || isNaN(amount) || amount <= 0) {
-            alert('กรุณากรอกชื่อรายการและจำนวนเงินให้ถูกต้อง');
+        if (!desc || isNaN(amount) || amount <= 0) {
+            alert('กรุณากรอกข้อมูลให้ครบถ้วน');
             return;
         }
 
         if (type === 'income') {
-            balance += amount;
-            addHistory(desc, amount, 'income');
-        } else if (type === 'expense') {
-            if (balance >= amount) {
-                balance -= amount;
-                addHistory(desc, amount, 'expense');
-            } else {
-                alert('เงินในกระเป๋าหลักไม่พอสำหรับรายจ่ายนี้!');
-                return;
-            }
-        }
-
-        // ล้างค่าในช่องกรอก
-        descInput.value = '';
-        amountInput.value = '';
-        updateUI();
-    }
-
-    // ฟังก์ชันโอนเงินเข้ากระเป๋าย่อย (Pockets)
-    function addToPocket(pocketId) {
-        const inputElement = document.getElementById(`${pocketId}-input`);
-        const amount = parseFloat(inputElement.value);
-
-        if (isNaN(amount) || amount <= 0) {
-            alert('กรุณากรอกจำนวนเงินให้ถูกต้อง');
-            return;
-        }
-
-        if (balance >= amount) {
-            balance -= amount; // หักจากเงินหลัก
-            pockets[pocketId] += amount; // เพิ่มในกระเป๋าย่อย
-            
-            // เพิ่มประวัติ
-            let pocketName = pocketId === 'travel' ? 'ไปเที่ยว' : (pocketId === 'savings' ? 'เงินออม' : 'ช้อปปิ้ง');
-            addHistory(`โอนเข้ากระเป๋า: ${pocketName}`, amount, 'expense');
-            
-            inputElement.value = '';
-            updateUI();
+            sendToGoogleSheet({ type: 'รายรับ', desc: desc, amount: amount });
         } else {
-            alert('ยอดเงินที่ใช้ได้ปัจจุบันของคุณไม่เพียงพอ!');
+            if (balance < amount) { alert('ยอดเงินไม่พอ!'); return; }
+            sendToGoogleSheet({ type: 'รายจ่าย', desc: desc, amount: amount });
         }
+
+        document.getElementById('desc').value = '';
+        document.getElementById('amount').value = '';
     }
 
-    // ฟังก์ชันเพิ่มประวัติรายการลงใน List
-    function addHistory(desc, amount, type) {
+    function addToPocket(pocketId, pocketName) {
+        const input = document.getElementById(`${pocketId}-input`);
+        const amount = parseFloat(input.value);
+
+        if (isNaN(amount) || amount <= 0) return;
+        if (balance < amount) { alert('ยอดเงินไม่พอ!'); return; }
+
+        sendToGoogleSheet({ type: 'โอนเข้ากระเป๋า', desc: `เก็บเงินเข้า ${pocketName}`, amount: amount, pocket: pocketName });
+
+        input.value = '';
+    }
+
+    function addHistoryUI(desc, amount, type) {
         const historyList = document.getElementById('history-list');
         const li = document.createElement('li');
         li.className = 'history-item';
-        
         const sign = type === 'income' ? '+' : '-';
         const colorClass = type === 'income' ? 'text-green' : 'text-red';
-        
-        li.innerHTML = `
-            <span>${desc}</span>
-            <span class="${colorClass}">${sign}${amount.toLocaleString('th-TH', {minimumFractionDigits: 2})}</span>
-        `;
-        
-        // แทรกรายการใหม่ไว้บนสุด
+        li.innerHTML = `<span>${desc}</span><span class="${colorClass}">${sign}${amount.toLocaleString('th-TH', {minimumFractionDigits: 2})}</span>`;
         historyList.insertBefore(li, historyList.firstChild);
     }
 
-    // เรียกใช้ครั้งแรกเพื่ออัปเดตหน้าจอให้เป็น 0.00
-    updateUI();
+    // โหลดข้อมูลเมื่อเปิดหน้าเว็บ
+    loadDataFromSheet();
 </script>
 
 </body>
