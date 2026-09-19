@@ -33,7 +33,7 @@
         .history-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
         .text-green { color: #4CAF50; font-weight: bold; }
         .text-red { color: #f44336; font-weight: bold; }
-        .sync-status { text-align: center; font-size: 0.85rem; color: #666; margin-top: 10px; }
+        .status-msg { text-align: center; font-size: 0.85rem; color: #666; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -43,16 +43,18 @@
         <h1>💰 จัดการเงินส่วนตัว (My Pocket)</h1>
     </div>
 
+    <!-- ยอดเงินคงเหลือ -->
     <div class="balance-card">
         <h2>ยอดเงินที่ใช้ได้ปัจจุบัน (บาท)</h2>
         <h1 id="total-balance">0.00</h1>
     </div>
 
     <div class="grid">
+        <!-- ฝั่งซ้าย: กรอกข้อมูล -->
         <div class="card">
             <h3>📝 บันทึกรายการ</h3>
             <label>ชื่อรายการ</label>
-            <input type="text" id="desc" placeholder="ระบุชื่อรายการ">
+            <input type="text" id="desc" placeholder="เช่น เงินเดือน, ค่าอาหาร">
             
             <label>จำนวนเงิน (บาท)</label>
             <input type="number" id="amount" placeholder="0.00">
@@ -60,11 +62,12 @@
             <button class="btn-income" onclick="addTransaction('income')">+ เพิ่มรายรับ</button>
             <button class="btn-expense" onclick="addTransaction('expense')">- เพิ่มรายจ่าย</button>
 
-            <h3 style="margin-top: 30px;">ประวัติรายการล่าสุด</h3>
+            <h3 style="margin-top: 30px;">ประวัติรายการบนเว็บ</h3>
             <ul class="history-list" id="history-list"></ul>
-            <div class="sync-status" id="sync-status">กำลังโหลดข้อมูลจาก Google Sheets...</div>
+            <div class="status-msg" id="status-msg"></div>
         </div>
 
+        <!-- ฝั่งขวา: กระเป๋าย่อย -->
         <div class="card">
             <h3>💼 กระเป๋าเงิน (Pockets)</h3>
             
@@ -105,102 +108,38 @@
 </div>
 
 <script>
-    // 1. ลิงก์ CSV สาธารณะของคุณ
-    const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRKXuVKQS42rJVKfjDBNEuVLfXPEFF3vL2JmtHeqNQt83Xovyx8BxonsQkkLlqUzwhiB4Ds5yIDl-uK/pub?output=csv";
-
-    // 2. นำ URL Web App จาก Google Apps Script มาใส่ตรงนี้เพื่อส่งข้อมูลบันทึกกลับไป
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzLRMAfRNaSA6ZZ9fWw27vaazkkgzJp0_ORmD50TqLNHaR2hILyCLJIBgWHdb_D506QYg/exec";
+    // ⚠️ นำ Web App URL ที่ได้หลังจากกด Deploy ใน Apps Script มาวางตรงนี้
+    const GOOGLE_SCRIPT_URL = "วาง_WEB_APP_URL_ที่ได้จาก_APPS_SCRIPT_ตรงนี้";
 
     let balance = 0;
     let pockets = { travel: 0, savings: 0, shopping: 0 };
 
-    // ฟังก์ชันแปลงข้อความ CSV เป็น Array
-    function parseCSV(text) {
-        let lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
-        return lines.map(line => {
-            let values = [];
-            let current = '';
-            let inQuotes = false;
-            for (let i = 0; i < line.length; i++) {
-                let char = line[i];
-                if (char === '"') {
-                    inQuotes = !inQuotes;
-                } else if (char === ',' && !inQuotes) {
-                    values.push(current.trim());
-                    current = '';
-                } else {
-                    current += char;
-                }
-            }
-            values.push(current.trim());
-            return values;
-        });
-    }
-
-    // โหลดข้อมูลล่าสุดจาก Google Sheets CSV
-    function loadDataFromSheet() {
-        fetch(CSV_URL)
-            .then(response => response.text())
-            .then(csvText => {
-                let rows = parseCSV(csvText);
-                if (rows.length <= 1) {
-                    document.getElementById('sync-status').innerText = 'ไม่พบข้อมูลในชีต';
-                    return;
-                }
-
-                // รีเซ็ตค่าก่อนคำนวณใหม่
-                balance = 0;
-                pockets = { travel: 0, savings: 0, shopping: 0 };
-                document.getElementById('history-list').innerHTML = '';
-
-                // ข้ามแถวหัวข้อ (Index 0)
-                for (let i = 1; i < rows.length; i++) {
-                    let row = rows[i];
-                    if (row.length < 4) continue;
-
-                    let type = row[1];
-                    let desc = row[2];
-                    let amount = parseFloat(row[3]) || 0;
-                    let pocketName = row[4] || '-';
-
-                    if (type === 'รายรับ') {
-                        balance += amount;
-                        addHistoryUI(desc, amount, 'income');
-                    } else if (type === 'รายจ่าย') {
-                        balance -= amount;
-                        addHistoryUI(desc, amount, 'expense');
-                    } else if (type === 'โอนเข้ากระเป๋า') {
-                        balance -= amount;
-                        if (pocketName.includes('ไปเที่ยว')) pockets.travel += amount;
-                        else if (pocketName.includes('เงินออม')) pockets.savings += amount;
-                        else if (pocketName.includes('ช้อปปิ้ง')) pockets.shopping += amount;
-                        addHistoryUI(desc, amount, 'expense');
-                    }
-                }
-
-                updateUI();
-                document.getElementById('sync-status').innerText = 'ซิงค์ข้อมูลกับ Google Sheets เรียบร้อยแล้ว';
-            })
-            .catch(err => {
-                console.error(err);
-                document.getElementById('sync-status').innerText = 'ไม่สามารถดึงข้อมูลจาก Google Sheets ได้';
-            });
-    }
-
+    // ฟังก์ชันส่งข้อมูลไปบันทึกลง Google Sheets
     function sendToGoogleSheet(data) {
-        if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes("วาง_URL")) return;
-        
+        if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes("วาง_WEB_APP_URL")) {
+            console.warn("ยังไม่ได้ใส่ GOOGLE_SCRIPT_URL");
+            return;
+        }
+
+        document.getElementById('status-msg').innerText = '⏳ กำลังบันทึกลง Google Sheets...';
+
         fetch(GOOGLE_SCRIPT_URL, {
             method: 'POST',
             mode: 'no-cors',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
-        }).then(() => {
-            // รอแป๊บเดียวแล้วโหลดข้อมูลใหม่จาก CSV
-            setTimeout(loadDataFromSheet, 1500);
-        }).catch(err => console.error('Error sending data:', err));
+        })
+        .then(() => {
+            document.getElementById('status-msg').innerText = '✅ บันทึกลง Google Sheets เรียบร้อย!';
+            setTimeout(() => { document.getElementById('status-msg').innerText = ''; }, 3000);
+        })
+        .catch(err => {
+            document.getElementById('status-msg').innerText = '❌ ส่งข้อมูลไม่สำเร็จ';
+            console.error(err);
+        });
     }
 
+    // อัปเดตหน้าจอทันที
     function updateUI() {
         document.getElementById('total-balance').innerText = balance.toLocaleString('th-TH', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         document.getElementById('pocket-travel-amount').innerText = pockets.travel.toLocaleString('th-TH', {minimumFractionDigits: 2}) + ' ฿';
@@ -208,38 +147,62 @@
         document.getElementById('pocket-shopping-amount').innerText = pockets.shopping.toLocaleString('th-TH', {minimumFractionDigits: 2}) + ' ฿';
     }
 
+    // เพิ่มรายรับ/รายจ่าย
     function addTransaction(type) {
-        const desc = document.getElementById('desc').value.trim();
-        const amount = parseFloat(document.getElementById('amount').value);
+        const descInput = document.getElementById('desc');
+        const amountInput = document.getElementById('amount');
+        const desc = descInput.value.trim();
+        const amount = parseFloat(amountInput.value);
 
         if (!desc || isNaN(amount) || amount <= 0) {
-            alert('กรุณากรอกข้อมูลให้ครบถ้วน');
+            alert('กรุณากรอกรายการและจำนวนเงินให้ถูกต้อง');
             return;
         }
 
         if (type === 'income') {
+            balance += amount;
+            addHistoryUI(desc, amount, 'income');
             sendToGoogleSheet({ type: 'รายรับ', desc: desc, amount: amount });
         } else {
-            if (balance < amount) { alert('ยอดเงินไม่พอ!'); return; }
+            if (balance < amount) {
+                alert('ยอดเงินคงเหลือไม่พอสำหรับรายจ่ายนี้!');
+                return;
+            }
+            balance -= amount;
+            addHistoryUI(desc, amount, 'expense');
             sendToGoogleSheet({ type: 'รายจ่าย', desc: desc, amount: amount });
         }
 
-        document.getElementById('desc').value = '';
-        document.getElementById('amount').value = '';
+        descInput.value = '';
+        amountInput.value = '';
+        updateUI();
     }
 
+    // โอนเงินเข้ากระเป๋า
     function addToPocket(pocketId, pocketName) {
         const input = document.getElementById(`${pocketId}-input`);
         const amount = parseFloat(input.value);
 
-        if (isNaN(amount) || amount <= 0) return;
-        if (balance < amount) { alert('ยอดเงินไม่พอ!'); return; }
+        if (isNaN(amount) || amount <= 0) {
+            alert('กรุณากรอกจำนวนเงิน');
+            return;
+        }
+        if (balance < amount) {
+            alert('ยอดเงินคงเหลือไม่พอ!');
+            return;
+        }
 
+        balance -= amount;
+        pockets[pocketId] += amount;
+        
+        addHistoryUI(`เก็บเงินเข้ากระเป๋า: ${pocketName}`, amount, 'expense');
         sendToGoogleSheet({ type: 'โอนเข้ากระเป๋า', desc: `เก็บเงินเข้า ${pocketName}`, amount: amount, pocket: pocketName });
 
         input.value = '';
+        updateUI();
     }
 
+    // แสดงรายการประวัติบนหน้าเว็บ
     function addHistoryUI(desc, amount, type) {
         const historyList = document.getElementById('history-list');
         const li = document.createElement('li');
@@ -250,8 +213,7 @@
         historyList.insertBefore(li, historyList.firstChild);
     }
 
-    // โหลดข้อมูลเมื่อเปิดหน้าเว็บ
-    loadDataFromSheet();
+    updateUI();
 </script>
 
 </body>
