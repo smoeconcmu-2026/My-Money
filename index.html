@@ -17,7 +17,7 @@
   <div class="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden p-5 space-y-5">
     
     <div class="text-center space-y-1">
-      <h1 class="text-2xl font-bold text-blue-700">📦 ระบบเช็ครายการแจกของ (Sheet2)</h1>
+      <h1 class="text-2xl font-bold text-blue-700">📦 ระบบเช็ครายการแจกของ</h1>
       <p class="text-xs text-gray-500" id="dataStatus">🔄 กำลังโหลดข้อมูลจาก Google Sheets...</p>
     </div>
     
@@ -74,10 +74,8 @@
   </div>
 
   <script>
-    // ดึงข้อมูล Published CSV เฉพาะ Sheet2
-    const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vScODA9rW6QK2xV9KnCz4PmLVGeIyBSSwvBj-qX1f325WOAygCgQnge_AUvTtwG_w/pub?sheet=Sheet2&output=csv";
+    const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vScODA9rW6QK2xV9KnCz4PmLVGeIyBSSwvBj-qX1f325WOAygCgQnge_AUvTtwG_w/pub?output=csv";
     
-    // กำหนดลำดับการเรียงสินค้าหมวดใหญ่
     const ITEM_ORDER = [
       "เสื้อโปโลเทา",
       "เสื้อเชิ้ตชมพู",
@@ -98,15 +96,30 @@
       return 99;
     }
 
-    let rawData = [];
+    let sheetData = [];
+
+    // ฟังก์ชันช่วยหาค่าจากคอลัมน์อย่างยืดหยุ่น (แก้ปัญหาการเว้นวรรค/BOM)
+    function getVal(row, targets) {
+      for (let key in row) {
+        // ลบอักขระพิเศษ และเว้นวรรคออกทั้งหมดเพื่อเปรียบเทียบ
+        const cleanKey = key.replace(/[^\u0E00-\u0E7Fa-zA-Z0-9]/g, '').toLowerCase();
+        for (let t of targets) {
+          const cleanTarget = t.replace(/[^\u0E00-\u0E7Fa-zA-Z0-9]/g, '').toLowerCase();
+          if (cleanKey.includes(cleanTarget) || cleanTarget.includes(cleanKey)) {
+            return String(row[key] || '').trim();
+          }
+        }
+      }
+      return '';
+    }
 
     window.onload = function() {
       Papa.parse(CSV_URL, {
         download: true,
         header: true,
         skipEmptyLines: true,
-        complete: function(results) {
-          rawData = results.data;
+        complete: function(res) {
+          sheetData = res.data;
           document.getElementById('dataStatus').innerText = "🟢 พร้อมใช้งาน (โหลดข้อมูลเรียบร้อย)";
           document.getElementById('dataStatus').classList.replace('text-gray-500', 'text-green-600');
           document.getElementById('searchInput').disabled = false;
@@ -132,37 +145,37 @@
 
       let currentOrderNo = "";
       let currentDate = "";
-      let currentStudentId = "";
-      let currentName = "";
-      let currentPhone = "";
       let currentReceipt = "";
+      let currentName = "";
+      let currentStudentId = "";
+      let currentPhone = "";
 
-      rawData.forEach(row => {
-        // ค้นหาคอลัมน์ ลำดับ / วันที่ ด้วยการรองรับชื่อคอลัมน์หลายรูปแบบ
-        const rawOrderNo = (row['ลำดับ'] || row['ลำดับที่'] || row['No'] || row['no'] || row['NO'] || '').trim();
-        const rawDate = (row['ว/ด/ป'] || row['วันที่'] || row['วัน/เดือน/ปี'] || '').trim();
-        const rawReceipt = (row['เล่มที่/เลขที่ใบเสร็จ'] || row['เลขที่ใบเสร็จ'] || '').trim();
-        const rawName = (row['ชื่อ - นามสกุล'] || row['ชื่อ-นามสกุล'] || '').trim();
-        const rawStudentId = String(row['รหัสนักศึกษา'] || '').trim();
-        const rawPhone = (row['เบอร์โทร'] || row['เบอร์โทรศัพท์'] || '').trim();
-        
-        // Forward fill สำหรับแถวเว้นว่าง
+      sheetData.forEach(row => {
+        const rawOrderNo = getVal(row, ['ลำดับ']);
+        const rawDate = getVal(row, ['ว/ด/ป', 'วันที่']);
+        const rawReceipt = getVal(row, ['ใบเสร็จ', 'เล่มที่']);
+        const rawName = getVal(row, ['ชื่อ']);
+        const rawStudentId = getVal(row, ['รหัส']);
+        const rawPhone = getVal(row, ['เบอร์', 'โทร']);
+
+        // Forward fill สำหรับช่องเว้นว่าง
         if (rawOrderNo !== "") currentOrderNo = rawOrderNo;
         if (rawDate !== "") currentDate = rawDate;
-        if (rawStudentId !== "") currentStudentId = rawStudentId;
-        if (rawName !== "") currentName = rawName;
-        if (rawPhone !== "") currentPhone = rawPhone;
         if (rawReceipt !== "") currentReceipt = rawReceipt;
+        if (rawName !== "") currentName = rawName;
+        if (rawStudentId !== "") currentStudentId = rawStudentId;
+        if (rawPhone !== "") currentPhone = rawPhone;
 
-        const itemName = (row['รายการ'] || '').trim();
-        const note = (row['หมายเหตุ'] || '').trim();
-        const size = (row['ไซส์'] || '-').trim();
-        const qty = parseInt(row['จำนวน'] || '0', 10);
+        const itemName = getVal(row, ['รายการ']);
+        const note = getVal(row, ['หมายเหตุ']);
+        const size = getVal(row, ['ไซส์']) || '-';
+        const qtyStr = getVal(row, ['จำนวน']);
+        const qty = parseInt(qtyStr || '0', 10);
 
         if (currentStudentId.toLowerCase().includes(keyword) || currentName.toLowerCase().includes(keyword)) {
           if (!studentInfo && (currentStudentId || currentName)) {
             studentInfo = { 
-              orderNo: currentOrderNo,
+              orderNo: currentOrderNo || "-",
               name: currentName, 
               studentId: currentStudentId, 
               phone: currentPhone 
@@ -170,7 +183,7 @@
           }
 
           if (qty > 0 && itemName !== "") {
-            // 1. แยกตามใบเสร็จ (เก็บบันทึกวันที่ไว้ด้วย)
+            // 1. แยกตามใบเสร็จ
             if (!receiptsMap.has(currentReceipt)) {
               receiptsMap.set(currentReceipt, {
                 date: currentDate,
@@ -202,9 +215,8 @@
       document.getElementById('notFound').classList.add('hidden');
 
       if (studentInfo && receiptsMap.size > 0) {
-        // แสดงข้อมูลผู้สั่งซื้อ พร้อม "ลำดับที่"
-        const displayOrder = studentInfo.orderNo ? `ลำดับที่ ${studentInfo.orderNo}` : 'ลำดับที่พบในระบบ';
-        document.getElementById('stOrderNo').innerText = displayOrder;
+        // แสดงข้อมูลผู้สั่งซื้อ
+        document.getElementById('stOrderNo').innerText = `ลำดับที่ ${studentInfo.orderNo}`;
         document.getElementById('stName').innerText = studentInfo.name || '-';
         document.getElementById('stId').innerText = studentInfo.studentId || '-';
         document.getElementById('stPhone').innerText = studentInfo.phone || '-';
@@ -212,7 +224,7 @@
         document.getElementById('studentCard').classList.remove('hidden');
 
         // ----------------------------------------------------
-        // 1. สร้างการ์ดแสดงตามใบเสร็จแต่ละใบ (พร้อมวันที่)
+        // 1. สร้างการ์ดแสดงตามใบเสร็จแต่ละใบ
         // ----------------------------------------------------
         const receiptList = document.getElementById('receiptList');
         receiptList.innerHTML = '';
