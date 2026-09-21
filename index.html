@@ -1,337 +1,220 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ระบบเช็ครายการแจกของพรีออเดอร์</title>
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- PapaParse สำหรับอ่านไฟล์ CSV -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600;700&display=swap" rel="stylesheet">
-  <style>
-    body { font-family: 'Prompt', sans-serif; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Pocket - จัดการเงินส่วนตัว</title>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Prompt', sans-serif; background-color: #f0f2f5; color: #333; margin: 0; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 20px; }
+        .balance-card { background: linear-gradient(135deg, #4CAF50, #2E7D32); color: white; padding: 30px; border-radius: 15px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 30px; }
+        .balance-card h2 { margin: 0 0 10px 0; font-size: 1.2rem; opacity: 0.9; }
+        .balance-card h1 { margin: 0; font-size: 3rem; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        h3 { margin-top: 0; border-bottom: 2px solid #f0f2f5; padding-bottom: 10px; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.9rem; }
+        input { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-family: 'Prompt', sans-serif; }
+        button { width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; font-family: 'Prompt', sans-serif; transition: 0.2s; }
+        .btn-income { background-color: #4CAF50; color: white; }
+        .btn-expense { background-color: #f44336; color: white; margin-top: 10px;}
+        button:hover { opacity: 0.9; }
+        .pocket-item { border: 1px solid #e0e0e0; padding: 15px; border-radius: 10px; margin-bottom: 15px; background: #fafafa; }
+        .pocket-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .pocket-name { font-weight: bold; font-size: 1.1rem; }
+        .pocket-amount { color: #2196F3; font-weight: bold; font-size: 1.2rem; }
+        .add-to-pocket { display: flex; gap: 10px; }
+        .add-to-pocket input { margin-bottom: 0; }
+        .add-to-pocket button { background-color: #2196F3; color: white; width: auto; white-space: nowrap; }
+        .history-list { list-style: none; padding: 0; margin: 0; max-height: 300px; overflow-y: auto; }
+        .history-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
+        .text-green { color: #4CAF50; font-weight: bold; }
+        .text-red { color: #f44336; font-weight: bold; }
+        .status-msg { text-align: center; font-size: 0.85rem; color: #666; margin-top: 10px; }
+    </style>
 </head>
-<body class="bg-gray-100 min-h-screen p-3 md:p-6">
-  <div class="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden p-5 space-y-5">
-    
-    <div class="text-center space-y-1">
-      <h1 class="text-2xl font-bold text-blue-700">📦 ระบบเช็ครายการแจกของ</h1>
-      <p class="text-xs text-gray-500" id="dataStatus">🔄 กำลังโหลดข้อมูลจาก Google Sheets...</p>
-    </div>
-    
-    <!-- ช่องค้นหา -->
-    <div class="space-y-2">
-      <label class="block text-sm font-medium text-gray-700">กรอกรหัสนักศึกษา หรือ ชื่อ-นามสกุล:</label>
-      <div class="flex gap-2">
-        <input type="text" id="searchInput" placeholder="เช่น 671610105 หรือ ชื่นกมล" disabled
-               class="flex-1 border rounded-lg px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100">
-        <button onclick="handleSearch()" id="searchBtn" disabled
-                class="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 active:scale-95 transition disabled:bg-gray-400">
-          ค้นหา
-        </button>
-      </div>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>💰 จัดการเงินส่วนตัว (My Pocket)</h1>
     </div>
 
-    <!-- ข้อมูลผู้สั่งซื้อ -->
-    <div id="studentCard" class="hidden bg-blue-50 p-4 rounded-lg border border-blue-200 space-y-1">
-      <div class="flex justify-between items-center border-b border-blue-200 pb-1.5 mb-2">
-        <h2 class="font-semibold text-blue-800 text-base">👤 ข้อมูลผู้สั่งซื้อ</h2>
-        <span class="bg-blue-600 text-white text-xs font-bold px-2.5 py-1 rounded-full" id="stOrderNo">ลำดับที่ -</span>
-      </div>
-      <p class="text-sm"><strong>ชื่อ-นามสกุล:</strong> <span id="stName">-</span></p>
-      <p class="text-sm"><strong>รหัสนักศึกษา:</strong> <span id="stId" class="font-mono text-blue-700 font-bold">-</span></p>
-      <p class="text-sm"><strong>เบอร์โทร:</strong> <span id="stPhone">-</span></p>
-      <p class="text-sm"><strong>จำนวนใบเสร็จทั้งหมด:</strong> <span id="stReceiptCount" class="font-bold text-blue-800">-</span></p>
+    <!-- ยอดเงินคงเหลือ -->
+    <div class="balance-card">
+        <h2>ยอดเงินที่ใช้ได้ปัจจุบัน (บาท)</h2>
+        <h1 id="total-balance">0.00</h1>
     </div>
 
-    <!-- ส่วนที่ 1: รายการแยกตามใบเสร็จทุกใบ -->
-    <div id="receiptsContainer" class="hidden space-y-3">
-      <h2 class="font-semibold text-purple-800 text-lg flex items-center gap-1">
-        📄 รายละเอียดใบเสร็จทั้งหมด
-      </h2>
-      <div id="receiptList" class="space-y-3"></div>
-    </div>
-
-    <!-- ส่วนที่ 2: สรุปรายการรวมสำหรับคนเดินหยิบของ -->
-    <div id="itemsContainer" class="hidden space-y-3 pt-2 border-t border-gray-200">
-      <div class="flex justify-between items-center">
-        <h2 class="font-bold text-gray-800 text-lg flex items-center gap-1">
-          🛒 รายการสรุปสำหรับเดินหยิบ
-        </h2>
-        <span class="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-1 rounded-full" id="itemCount">0 ชิ้น</span>
-      </div>
-      <p class="text-xs text-gray-500">จัดกลุ่มตามประเภทสินค้า เพื่อให้เดินไปรับที่เคาน์เตอร์ได้สะดวก</p>
-      <div id="itemList" class="space-y-3"></div>
-    </div>
-
-    <!-- ไม่พบข้อมูล -->
-    <div id="notFound" class="hidden text-center text-red-500 py-6 font-medium bg-red-50 rounded-lg border border-red-200">
-      ❌ ไม่พบข้อมูลการสั่งซื้อ
-    </div>
-
-  </div>
-
-  <script>
-    const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vScODA9rW6QK2xV9KnCz4PmLVGeIyBSSwvBj-qX1f325WOAygCgQnge_AUvTtwG_w/pub?output=csv";
-    
-    const ITEM_ORDER = [
-      "เสื้อโปโลเทา",
-      "เสื้อเชิ้ตชมพู",
-      "เสื้อกิจกรรม 2026",
-      "กางเกงวอร์ม",
-      "กางเกงวอร์มพิเศษ",
-      "ตุ้งติ้ง",
-      "หัวเข็มขัด"
-    ];
-
-    function getItemRank(itemName) {
-      const cleanName = itemName.trim();
-      for (let i = 0; i < ITEM_ORDER.length; i++) {
-        if (cleanName.includes(ITEM_ORDER[i])) {
-          return i;
-        }
-      }
-      return 99;
-    }
-
-    let sheetData = [];
-
-    // ฟังก์ชันช่วยหาค่าจากคอลัมน์อย่างยืดหยุ่น (แก้ปัญหาการเว้นวรรค/BOM)
-    function getVal(row, targets) {
-      for (let key in row) {
-        // ลบอักขระพิเศษ และเว้นวรรคออกทั้งหมดเพื่อเปรียบเทียบ
-        const cleanKey = key.replace(/[^\u0E00-\u0E7Fa-zA-Z0-9]/g, '').toLowerCase();
-        for (let t of targets) {
-          const cleanTarget = t.replace(/[^\u0E00-\u0E7Fa-zA-Z0-9]/g, '').toLowerCase();
-          if (cleanKey.includes(cleanTarget) || cleanTarget.includes(cleanKey)) {
-            return String(row[key] || '').trim();
-          }
-        }
-      }
-      return '';
-    }
-
-    window.onload = function() {
-      Papa.parse(CSV_URL, {
-        download: true,
-        header: true,
-        skipEmptyLines: true,
-        complete: function(res) {
-          sheetData = res.data;
-          document.getElementById('dataStatus').innerText = "🟢 พร้อมใช้งาน (โหลดข้อมูลเรียบร้อย)";
-          document.getElementById('dataStatus').classList.replace('text-gray-500', 'text-green-600');
-          document.getElementById('searchInput').disabled = false;
-          document.getElementById('searchBtn').disabled = false;
-        },
-        error: function(err) {
-          document.getElementById('dataStatus').innerText = "🔴 ไม่สามารถโหลดข้อมูลได้ กรุณารีเฟรชหน้าเว็บ";
-          document.getElementById('dataStatus').classList.replace('text-gray-500', 'text-red-600');
-        }
-      });
-    };
-
-    function handleSearch() {
-      const keyword = document.getElementById('searchInput').value.trim().toLowerCase();
-      if (!keyword) {
-        alert('กรุณากรอกรหัสนักศึกษาหรือชื่อ');
-        return;
-      }
-
-      let studentInfo = null;
-      let receiptsMap = new Map();
-      let categoryMap = new Map();
-
-      let currentOrderNo = "";
-      let currentDate = "";
-      let currentReceipt = "";
-      let currentName = "";
-      let currentStudentId = "";
-      let currentPhone = "";
-
-      sheetData.forEach(row => {
-        const rawOrderNo = getVal(row, ['ลำดับ']);
-        const rawDate = getVal(row, ['ว/ด/ป', 'วันที่']);
-        const rawReceipt = getVal(row, ['ใบเสร็จ', 'เล่มที่']);
-        const rawName = getVal(row, ['ชื่อ']);
-        const rawStudentId = getVal(row, ['รหัส']);
-        const rawPhone = getVal(row, ['เบอร์', 'โทร']);
-
-        // Forward fill สำหรับช่องเว้นว่าง
-        if (rawOrderNo !== "") currentOrderNo = rawOrderNo;
-        if (rawDate !== "") currentDate = rawDate;
-        if (rawReceipt !== "") currentReceipt = rawReceipt;
-        if (rawName !== "") currentName = rawName;
-        if (rawStudentId !== "") currentStudentId = rawStudentId;
-        if (rawPhone !== "") currentPhone = rawPhone;
-
-        const itemName = getVal(row, ['รายการ']);
-        const note = getVal(row, ['หมายเหตุ']);
-        const size = getVal(row, ['ไซส์']) || '-';
-        const qtyStr = getVal(row, ['จำนวน']);
-        const qty = parseInt(qtyStr || '0', 10);
-
-        if (currentStudentId.toLowerCase().includes(keyword) || currentName.toLowerCase().includes(keyword)) {
-          if (!studentInfo && (currentStudentId || currentName)) {
-            studentInfo = { 
-              orderNo: currentOrderNo || "-",
-              name: currentName, 
-              studentId: currentStudentId, 
-              phone: currentPhone 
-            };
-          }
-
-          if (qty > 0 && itemName !== "") {
-            // 1. แยกตามใบเสร็จ
-            if (!receiptsMap.has(currentReceipt)) {
-              receiptsMap.set(currentReceipt, {
-                date: currentDate,
-                items: []
-              });
-            }
-            receiptsMap.get(currentReceipt).items.push({ itemName, size, note, qty });
-
-            // 2. จัดกลุ่มตามประเภทสินค้าใหญ่สำหรับสรุป
-            if (!categoryMap.has(itemName)) {
-              categoryMap.set(itemName, new Map());
-            }
-            let sizeMap = categoryMap.get(itemName);
+    <div class="grid">
+        <!-- ฝั่งซ้าย: กรอกข้อมูล -->
+        <div class="card">
+            <h3>📝 บันทึกรายการ</h3>
+            <label>ชื่อรายการ</label>
+            <input type="text" id="desc" placeholder="เช่น เงินเดือน, ค่าอาหาร">
             
-            const subKey = `${size}___${note}`;
-            if (sizeMap.has(subKey)) {
-              sizeMap.set(subKey, sizeMap.get(subKey) + qty);
-            } else {
-              sizeMap.set(subKey, qty);
-            }
-          }
-        }
-      });
-
-      // ซ่อน/แสดง UI
-      document.getElementById('studentCard').classList.add('hidden');
-      document.getElementById('receiptsContainer').classList.add('hidden');
-      document.getElementById('itemsContainer').classList.add('hidden');
-      document.getElementById('notFound').classList.add('hidden');
-
-      if (studentInfo && receiptsMap.size > 0) {
-        // แสดงข้อมูลผู้สั่งซื้อ
-        document.getElementById('stOrderNo').innerText = `ลำดับที่ ${studentInfo.orderNo}`;
-        document.getElementById('stName').innerText = studentInfo.name || '-';
-        document.getElementById('stId').innerText = studentInfo.studentId || '-';
-        document.getElementById('stPhone').innerText = studentInfo.phone || '-';
-        document.getElementById('stReceiptCount').innerText = `${receiptsMap.size} ใบเสร็จ`;
-        document.getElementById('studentCard').classList.remove('hidden');
-
-        // ----------------------------------------------------
-        // 1. สร้างการ์ดแสดงตามใบเสร็จแต่ละใบ
-        // ----------------------------------------------------
-        const receiptList = document.getElementById('receiptList');
-        receiptList.innerHTML = '';
-
-        receiptsMap.forEach((rcData, rcNumber) => {
-          const rcCard = document.createElement('div');
-          rcCard.className = "bg-purple-50 p-3.5 rounded-lg border border-purple-200 space-y-2";
-          
-          let itemsHtml = rcData.items.map(it => {
-            const noteTag = it.note ? `<span class="ml-1 px-1.5 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-bold rounded border border-yellow-300">${it.note}</span>` : '';
-            return `
-              <div class="flex justify-between items-center text-sm py-1 border-b border-purple-100 last:border-0">
-                <span class="text-gray-800 font-medium">
-                  ${it.itemName} 
-                  <span class="text-xs text-gray-500 bg-white px-1.5 py-0.5 rounded border border-purple-200">ไซส์: ${it.size}</span>
-                  ${noteTag}
-                </span>
-                <span class="font-bold text-purple-700">x ${it.qty}</span>
-              </div>
-            `;
-          }).join('');
-
-          const dateDisplay = rcData.date ? `<span class="text-xs font-normal text-purple-700 ml-1">(วันที่: ${rcData.date})</span>` : '';
-
-          rcCard.innerHTML = `
-            <div class="flex justify-between items-center border-b border-purple-200 pb-1.5">
-              <span class="font-bold text-purple-900 text-sm">
-                🧾 ใบเสร็จเลขที่: ${rcNumber || 'ไม่ระบุ'} ${dateDisplay}
-              </span>
-              <span class="text-xs bg-purple-200 text-purple-800 px-2 py-0.5 rounded-full font-semibold">${rcData.items.length} รายการ</span>
-            </div>
-            <div class="pt-1">${itemsHtml}</div>
-          `;
-          receiptList.appendChild(rcCard);
-        });
-        document.getElementById('receiptsContainer').classList.remove('hidden');
-
-        // ----------------------------------------------------
-        // 2. สร้างกรอบหมวดหมู่สินค้าใหญ่สำหรับหยิบของ
-        // ----------------------------------------------------
-        const itemList = document.getElementById('itemList');
-        itemList.innerHTML = '';
-
-        let sortedCategories = Array.from(categoryMap.keys()).sort((a, b) => {
-          const rankA = getItemRank(a);
-          const rankB = getItemRank(b);
-          if (rankA !== rankB) return rankA - rankB;
-          return a.localeCompare(b, 'th');
-        });
-
-        let totalOverallQty = 0;
-
-        sortedCategories.forEach(catName => {
-          const sizeMap = categoryMap.get(catName);
-          let catTotalQty = 0;
-          let sizesHtml = '';
-
-          sizeMap.forEach((qty, subKey) => {
-            catTotalQty += qty;
-            totalOverallQty += qty;
+            <label>จำนวนเงิน (บาท)</label>
+            <input type="number" id="amount" placeholder="0.00">
             
-            const [size, note] = subKey.split('___');
-            const noteBadge = note ? `<span class="ml-2 px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-bold rounded border border-yellow-300">📌 ${note}</span>` : '';
+            <button class="btn-income" onclick="addTransaction('income')">+ เพิ่มรายรับ</button>
+            <button class="btn-expense" onclick="addTransaction('expense')">- เพิ่มรายจ่าย</button>
 
-            sizesHtml += `
-              <div class="flex items-center justify-between bg-gray-50 p-2.5 rounded-md border border-gray-200">
-                <div class="flex items-center">
-                  <span class="text-sm font-semibold text-gray-700">ไซส์: <span class="text-base font-bold text-blue-700 bg-white px-2 py-0.5 rounded border border-gray-300">${size}</span></span>
-                  ${noteBadge}
+            <h3 style="margin-top: 30px;">ประวัติรายการบนเว็บ</h3>
+            <ul class="history-list" id="history-list"></ul>
+            <div class="status-msg" id="status-msg"></div>
+        </div>
+
+        <!-- ฝั่งขวา: กระเป๋าย่อย -->
+        <div class="card">
+            <h3>💼 กระเป๋าเงิน (Pockets)</h3>
+            
+            <div class="pocket-item">
+                <div class="pocket-header">
+                    <span class="pocket-name">✈️ ไปเที่ยว</span>
+                    <span class="pocket-amount" id="pocket-travel-amount">0.00 ฿</span>
                 </div>
-                <span class="text-lg font-extrabold text-green-600 bg-green-50 px-3 py-0.5 rounded border border-green-200">x ${qty}</span>
-              </div>
-            `;
-          });
+                <div class="add-to-pocket">
+                    <input type="number" id="travel-input" placeholder="จำนวนเงิน">
+                    <button onclick="addToPocket('travel', 'ไปเที่ยว')">เก็บเงิน</button>
+                </div>
+            </div>
 
-          const groupCard = document.createElement('div');
-          groupCard.className = "bg-white p-4 rounded-xl border-2 border-blue-500 shadow-sm space-y-2.5";
-          groupCard.innerHTML = `
-            <div class="flex justify-between items-center border-b-2 border-blue-100 pb-2">
-              <h3 class="font-bold text-blue-900 text-base flex items-center gap-1.5">
-                🏷️ ${catName}
-              </h3>
-              <span class="bg-blue-600 text-white text-xs font-bold px-2.5 py-1 rounded-md">
-                รวม ${catTotalQty} ชิ้น
-              </span>
+            <div class="pocket-item">
+                <div class="pocket-header">
+                    <span class="pocket-name">🐷 เงินออมฉุกเฉิน</span>
+                    <span class="pocket-amount" id="pocket-savings-amount">0.00 ฿</span>
+                </div>
+                <div class="add-to-pocket">
+                    <input type="number" id="savings-input" placeholder="จำนวนเงิน">
+                    <button onclick="addToPocket('savings', 'เงินออมฉุกเฉิน')">เก็บเงิน</button>
+                </div>
             </div>
-            <div class="grid grid-cols-1 gap-2 pt-1">
-              ${sizesHtml}
+
+            <div class="pocket-item">
+                <div class="pocket-header">
+                    <span class="pocket-name">🛍️ ช้อปปิ้ง</span>
+                    <span class="pocket-amount" id="pocket-shopping-amount">0.00 ฿</span>
+                </div>
+                <div class="add-to-pocket">
+                    <input type="number" id="shopping-input" placeholder="จำนวนเงิน">
+                    <button onclick="addToPocket('shopping', 'ช้อปปิ้ง')">เก็บเงิน</button>
+                </div>
             </div>
-          `;
-          itemList.appendChild(groupCard);
+        </div>
+    </div>
+</div>
+
+<script>
+    // ⚠️ นำ Web App URL ที่ได้หลังจากกด Deploy ใน Apps Script มาวางตรงนี้
+    const GOOGLE_SCRIPT_URL = "วาง_WEB_APP_URL_ที่ได้จาก_APPS_SCRIPT_ตรงนี้";
+
+    let balance = 0;
+    let pockets = { travel: 0, savings: 0, shopping: 0 };
+
+    // ฟังก์ชันส่งข้อมูลไปบันทึกลง Google Sheets
+    function sendToGoogleSheet(data) {
+        if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes("วาง_WEB_APP_URL")) {
+            console.warn("ยังไม่ได้ใส่ GOOGLE_SCRIPT_URL");
+            return;
+        }
+
+        document.getElementById('status-msg').innerText = '⏳ กำลังบันทึกลง Google Sheets...';
+
+        fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        .then(() => {
+            document.getElementById('status-msg').innerText = '✅ บันทึกลง Google Sheets เรียบร้อย!';
+            setTimeout(() => { document.getElementById('status-msg').innerText = ''; }, 3000);
+        })
+        .catch(err => {
+            document.getElementById('status-msg').innerText = '❌ ส่งข้อมูลไม่สำเร็จ';
+            console.error(err);
         });
-
-        document.getElementById('itemCount').innerText = `รวมทั้งหมด ${totalOverallQty} ชิ้น`;
-        document.getElementById('itemsContainer').classList.remove('hidden');
-
-      } else {
-        document.getElementById('notFound').classList.remove('hidden');
-      }
     }
 
-    // กด Enter ในช่องค้นหาได้
-    document.getElementById('searchInput').addEventListener('keypress', function (e) {
-      if (e.key === 'Enter') {
-        handleSearch();
-      }
-    });
-  </script>
+    // อัปเดตหน้าจอทันที
+    function updateUI() {
+        document.getElementById('total-balance').innerText = balance.toLocaleString('th-TH', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        document.getElementById('pocket-travel-amount').innerText = pockets.travel.toLocaleString('th-TH', {minimumFractionDigits: 2}) + ' ฿';
+        document.getElementById('pocket-savings-amount').innerText = pockets.savings.toLocaleString('th-TH', {minimumFractionDigits: 2}) + ' ฿';
+        document.getElementById('pocket-shopping-amount').innerText = pockets.shopping.toLocaleString('th-TH', {minimumFractionDigits: 2}) + ' ฿';
+    }
+
+    // เพิ่มรายรับ/รายจ่าย
+    function addTransaction(type) {
+        const descInput = document.getElementById('desc');
+        const amountInput = document.getElementById('amount');
+        const desc = descInput.value.trim();
+        const amount = parseFloat(amountInput.value);
+
+        if (!desc || isNaN(amount) || amount <= 0) {
+            alert('กรุณากรอกรายการและจำนวนเงินให้ถูกต้อง');
+            return;
+        }
+
+        if (type === 'income') {
+            balance += amount;
+            addHistoryUI(desc, amount, 'income');
+            sendToGoogleSheet({ type: 'รายรับ', desc: desc, amount: amount });
+        } else {
+            if (balance < amount) {
+                alert('ยอดเงินคงเหลือไม่พอสำหรับรายจ่ายนี้!');
+                return;
+            }
+            balance -= amount;
+            addHistoryUI(desc, amount, 'expense');
+            sendToGoogleSheet({ type: 'รายจ่าย', desc: desc, amount: amount });
+        }
+
+        descInput.value = '';
+        amountInput.value = '';
+        updateUI();
+    }
+
+    // โอนเงินเข้ากระเป๋า
+    function addToPocket(pocketId, pocketName) {
+        const input = document.getElementById(`${pocketId}-input`);
+        const amount = parseFloat(input.value);
+
+        if (isNaN(amount) || amount <= 0) {
+            alert('กรุณากรอกจำนวนเงิน');
+            return;
+        }
+        if (balance < amount) {
+            alert('ยอดเงินคงเหลือไม่พอ!');
+            return;
+        }
+
+        balance -= amount;
+        pockets[pocketId] += amount;
+        
+        addHistoryUI(`เก็บเงินเข้ากระเป๋า: ${pocketName}`, amount, 'expense');
+        sendToGoogleSheet({ type: 'โอนเข้ากระเป๋า', desc: `เก็บเงินเข้า ${pocketName}`, amount: amount, pocket: pocketName });
+
+        input.value = '';
+        updateUI();
+    }
+
+    // แสดงรายการประวัติบนหน้าเว็บ
+    function addHistoryUI(desc, amount, type) {
+        const historyList = document.getElementById('history-list');
+        const li = document.createElement('li');
+        li.className = 'history-item';
+        const sign = type === 'income' ? '+' : '-';
+        const colorClass = type === 'income' ? 'text-green' : 'text-red';
+        li.innerHTML = `<span>${desc}</span><span class="${colorClass}">${sign}${amount.toLocaleString('th-TH', {minimumFractionDigits: 2})}</span>`;
+        historyList.insertBefore(li, historyList.firstChild);
+    }
+
+    updateUI();
+</script>
+
 </body>
 </html>
